@@ -8,7 +8,7 @@ router.get("/get-conversation",getConversation)
 router.post("/update-conversation",updateConversation)
 
 
-router.post("save-messge",saveMessage)
-router.get("get-messge/:conversationId",getMessage)
+router.post("/save-messge",saveMessage)
+router.get("/get-messge/:conversationId",getMessage)
 
 export default router

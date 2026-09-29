@@ -1,10 +1,10 @@
+import "./config/env.js";
 import express from "express";
-import dotenv from "dotenv";
 import connectDB from "./config/db.js";
+import router from "./routes/agent.routes.js";
 
 
 
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 
 // Routes
-// app.use("/", router);
+app.use("/", router);
 
 // Start server
 app.listen(PORT, async () => {
