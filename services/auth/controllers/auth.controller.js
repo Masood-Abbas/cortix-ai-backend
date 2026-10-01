@@ -62,13 +62,13 @@ export const loginController = async (req, res) => {
 
 export const logoutController= async(req,res)=>{
   try {
-    const sessionId=req.cookies?.session
-    await redis.del(`session-${sessionId}`)
+    const sessionId = req.headers.cookie?.split(";").map((part) => part.trim()).find((part) => part.startsWith("session="))?.slice(8)
+    if (sessionId) await redis.del(`session-${sessionId}`)
 
     res.clearCookie("session")
     return res.status(200).json({message:"logout successfully"})
   } catch (error) {
     console.log(error)
-     return res.status(200).json({message:"logout error",error})
+     return res.status(500).json({message:"Logout failed"})
   }
 } 

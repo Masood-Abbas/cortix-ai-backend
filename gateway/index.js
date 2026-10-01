@@ -1,5 +1,5 @@
+import "./config/env.js";
 import express from "express";
-import dotenv from "dotenv";
 import proxy from "express-http-proxy";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -8,7 +8,6 @@ import protect from "./middleware/auth.middleware.js";
 import { proxyWithHeader } from "./utils/proxyWithHeader.js";
 import morgan from "morgan";
 
-dotenv.config();
 
 const app = express();
 

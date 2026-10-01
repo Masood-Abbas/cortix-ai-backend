@@ -1,13 +1,20 @@
 import "./env.js";
 import { ChatGroq } from "@langchain/groq";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { ChatOpenRouter } from "@langchain/openrouter";
 
 const groq = new ChatGroq({
   model: "openai/gpt-oss-120b",
 });
 
 const gemni = new ChatGoogleGenerativeAI({
-  model: "gemini-2.5-flash",
+  model: "gemini-3.5-flash",
+});
+
+const openrouter = new ChatOpenRouter({
+  model: "deepseek/deepseek-chat",
+  temperature:0,
+  maxTokens:2500
 });
 
 export const getModel = async (agent) => {
@@ -17,7 +24,7 @@ export const getModel = async (agent) => {
     case "search":
       return groq;
     case "coding":
-      return gemni;
+      return openrouter;
 
     default:
       return groq;

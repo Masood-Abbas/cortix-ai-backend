@@ -1,9 +1,10 @@
 import express from "express"
-import { createConversation, getConversation, getMessage, saveMessage, updateConversation } from "../controllers/chat.controller.js"
+import { createConversation, getConversation, getConversationById, getMessage, saveMessage, updateConversation } from "../controllers/chat.controller.js"
 
 const router= express.Router()
 
-router.get("/create-conversation",createConversation)
+router.post("/create-conversation",createConversation)
+router.get("/conversation/:conversationId",getConversationById)
 router.get("/get-conversation",getConversation)
 router.post("/update-conversation",updateConversation)
 

@@ -6,7 +6,9 @@ const conversationSchema = new mongoose.Schema({
         default:"New Chat"
     },
     userId:{
-        type:String
+        type:String,
+        required: true,
+        index: true,
     }
 }, { timestamps: true });
 
