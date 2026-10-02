@@ -23,6 +23,8 @@ export const getModel = async (agent) => {
       return groq;
     case "search":
       return groq;
+    case "vision":
+      return gemni;
     case "coding":
       return openrouter;
 

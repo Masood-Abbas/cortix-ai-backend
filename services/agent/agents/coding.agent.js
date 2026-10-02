@@ -1,4 +1,5 @@
 import { getModel } from "../config/llmmodels.js";
+import { getUnsplashImages } from "../tools/unsplash.tool.js";
 
 const cleanJsonContent = (content) =>
   String(content || "")
@@ -32,10 +33,9 @@ const extractJsonObject = (content) => {
   return null;
 };
 
-const projectSummary = () => `# Project Generated
+const projectSummary = () => `# Code Generated
 
-I generated the requested project files. Open the artifact preview to view and inspect the code.
-`;
+Your project is ready to explore.`;
 
 const normalizeFiles = (files) =>
   Array.isArray(files)
@@ -60,140 +60,155 @@ const latestProjectArtifact = (history = []) => {
 };
 
 export const codingAgent = async (state) => {
-  const intentLlm = await getModel("intent");
-  const llm = await getModel("coding");
-  const existingArtifact = latestProjectArtifact(state.history);
-
-  const intentRes = await intentLlm.invoke(`
-    You are an intent classifier .
-    Return ONLY one of these values.
-    CODE_GENERATION
-    CODE_REVIEW
-    CODE_EXPLANATION
-    DEBUGGING
-    OPTIMIZATION
-    CONVERSION
-    DOCUMENTATION
-
-    USER REQUEST:
-    ${state.prompt}
-    `);
-  const intent = String(intentRes.content || "").trim().toUpperCase();
-  const shouldReturnProject =
-    intent === "CODE_GENERATION" ||
-    (existingArtifact &&
-      ["DEBUGGING", "OPTIMIZATION", "CONVERSION"].includes(intent));
-
-  if (shouldReturnProject) {
-    const prompt = `
-      You are CortexAI coding Agent.
-      ${existingArtifact ? "Update the existing project files using the user's request." : "Generate the requested project."}
-
-      Default Stact:
-      - HTML
-      - CSS
-      - JavaScript
-
-      use React/ Next.js / Vue Only if explicity requested.
-
-      Rules:
-
-      - Responsive
-      - Modern UI
-      - CSS Variables
-      - Flexbox/Grid
-      - Smooth Scroll
-      - Hover Effects
-      - Beautiful spacing
-      - Single Page unless user asks otherwise.
-
-      IMAGES:
-      - Always use real unsplash images.
-      - Never use placeholders.
-
-      Return Only valid JSON.
-
-      Schema:
-
-        {
-          "files": [
-             {
-                "name": "index.html",
-                "content": "..."
-              },
-              {
-                "name": "style.css",
-                "content": "..."
-             },
-            {
-                "name": "script.js",
-                "content": "..."
-            }
-          ]
-        }
-
-      Rules:
-
-      - Output must start with {
-      - Output must end with }
-      - No markdown
-      - No explanation
-      - No extra text
-      - No '\'\'
-      - Never mention intent
-
-      Existing files:
-      ${JSON.stringify(normalizeFiles(existingArtifact?.files), null, 2)}
-
-      User Request:
+  try {
+    const intentLlm = await getModel("intent");
+    const llm = await getModel("coding");
+    const existingArtifact = latestProjectArtifact(state.history);
+  
+    const intentRes = await intentLlm.invoke(`
+      You are an intent classifier .
+      Return ONLY one of these values.
+      CODE_GENERATION
+      CODE_REVIEW
+      CODE_EXPLANATION
+      DEBUGGING
+      OPTIMIZATION
+      CONVERSION
+      DOCUMENTATION
+  
+      USER REQUEST:
       ${state.prompt}
-
-      `;
-    const res = await llm.invoke(prompt);
-    const data = extractJsonObject(res.content);
-    if (!data) {
+      `);
+    const intent = String(intentRes.content || "").trim().toUpperCase();
+    const shouldReturnProject =
+      intent === "CODE_GENERATION" ||
+      (existingArtifact &&
+        ["DEBUGGING", "OPTIMIZATION", "CONVERSION"].includes(intent));
+  
+    if (shouldReturnProject) {
+      const unsplashImages = await getUnsplashImages(state.prompt, 6);
+      const prompt = `
+        You are CortexAI coding Agent.
+        ${existingArtifact ? "Update the existing project files using the user's request." : "Generate the requested project."}
+  
+        Default Stact:
+        - HTML
+        - CSS
+        - JavaScript
+  
+        use React/ Next.js / Vue Only if explicity requested.
+  
+        Rules:
+  
+        - Responsive
+        - Modern UI
+        - CSS Variables
+        - Flexbox/Grid
+        - Smooth Scroll
+        - Hover Effects
+        - Beautiful spacing
+        - Single Page unless user asks otherwise.
+  
+        IMAGES:
+        - Use the provided Unsplash image URLs when the project needs images.
+        - Use image URLs exactly as provided.
+        - Never use placeholders.
+        - If no Unsplash image URLs are provided, build the UI without image placeholders.
+  
+        Unsplash image URLs:
+        ${JSON.stringify(unsplashImages, null, 2)}
+  
+        Return Only valid JSON.
+  
+        Schema:
+  
+          {
+            "files": [
+               {
+                  "name": "index.html",
+                  "content": "..."
+                },
+                {
+                  "name": "style.css",
+                  "content": "..."
+               },
+              {
+                  "name": "script.js",
+                  "content": "..."
+              }
+            ]
+          }
+  
+        Rules:
+  
+        - Output must start with {
+        - Output must end with }
+        - No markdown
+        - No explanation
+        - No extra text
+        - No '\'\'
+        - Never mention intent
+  
+        Existing files:
+        ${JSON.stringify(normalizeFiles(existingArtifact?.files), null, 2)}
+  
+        User Request:
+        ${state.prompt}
+  
+        `;
+      const res = await llm.invoke(prompt);
+      const data = extractJsonObject(res.content);
+      if (!data) {
+        return {
+          ...state,
+          aiResponse: `# Generated Code\n\n${res.content}`,
+          artifacts: [],
+        };
+      }
+      const files = normalizeFiles(data.files);
       return {
         ...state,
-        aiResponse: `# Generated Code\n\n${res.content}`,
-        artifacts: [],
+        aiResponse: projectSummary(files),
+        artifacts: [
+          {
+            id: Date.now(),
+            type: "Project",
+            files,
+            title:state.prompt
+          },
+        ],
       };
     }
-    const files = normalizeFiles(data.files);
+  
+    const res = await llm.invoke(`
+      The user's request is:
+      ${intent}
+      Return Markdown only.
+      Never generate project files.
+      use heading like:
+      # Overview
+      ##  Explanation
+      ## Problems
+      ## Improvements
+      ## Best Practices
+      ## Optimized Code (if needed)
+  
+      User Request:
+      ${state.prompt}
+      `);
+  
+    const data = res.content;
     return {
       ...state,
-      aiResponse: projectSummary(files),
-      artifacts: [
-        {
-          id: Date.now(),
-          type: "Project",
-          files,
-          title:state.prompt
-        },
-      ],
+      aiResponse: data,
+      artifacts: [],
+    };
+  } catch (error) {
+    console.log(error)
+    return {
+      ...state,
+      aiResponse: error,
+      artifacts: [],
     };
   }
-
-  const res = await llm.invoke(`
-    The user's request is:
-    ${intent}
-    Return Markdown only.
-    Never generate project files.
-    use heading like:
-    # Overview
-    ##  Explanation
-    ## Problems
-    ## Improvements
-    ## Best Practices
-    ## Optimized Code (if needed)
-
-    User Request:
-    ${state.prompt}
-    `);
-
-  const data = res.content;
-  return {
-    ...state,
-    aiResponse: data,
-    artifacts: [],
-  };
 };

@@ -43,6 +43,8 @@ for (const route of ["chat", "coding", "search", "pdf", "ppt", "vision", "unknow
       assert.equal(globalThis.__routeFixture.model, route === "coding" ? "coding" : "chat");
     } else if (route === "coding") {
       assert.equal(globalThis.__routeFixture.model, "coding");
+    } else if (route === "vision") {
+      assert.match(result.aiResponse, /Unable to generate the image/);
     } else {
       assert.match(result.aiResponse, /not available yet/);
     }
