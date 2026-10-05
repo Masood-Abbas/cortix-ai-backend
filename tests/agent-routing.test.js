@@ -12,6 +12,9 @@ const hooks = registerHooks({
           if (name === "router") return { content: fixture.route };
           fixture.history = messages;
           fixture.model = name;
+          if (name === "pdf") {
+            return { content: JSON.stringify({ title: "PDF", subtitle: "Test", section: [{ heading: "One", points: ["A"] }] }) };
+          }
           return { content: "model response" };
         } });
       ` };
@@ -24,6 +27,21 @@ const hooks = registerHooks({
             images: ["https://example.com/image.jpg"],
           }),
         };
+      ` };
+    }
+    if (url.endsWith("/utils/generatePdf.js")) {
+      return { format: "module", shortCircuit: true, source: `
+        export const generatePdf = async () => Buffer.from("pdf");
+      ` };
+    }
+    if (url.endsWith("/utils/uplodeToS3.js")) {
+      return { format: "module", shortCircuit: true, source: `
+        export const uploadTOS3 = async () => "file";
+      ` };
+    }
+    if (url.endsWith("/utils/getFromS3.js")) {
+      return { format: "module", shortCircuit: true, source: `
+        export const getFromS3 = async () => "https://signed.example.com/file.pdf";
       ` };
     }
     return nextLoad(url, context);
@@ -43,6 +61,15 @@ for (const route of ["chat", "coding", "search", "pdf", "ppt", "vision", "unknow
       assert.equal(globalThis.__routeFixture.model, route === "coding" ? "coding" : "chat");
     } else if (route === "coding") {
       assert.equal(globalThis.__routeFixture.model, "coding");
+    } else if (route === "pdf") {
+      assert.equal(globalThis.__routeFixture.model, "pdf");
+      assert.deepEqual(result.files, [
+        {
+          name: result.files[0].name,
+          url: "https://signed.example.com/file.pdf",
+          type: "application/pdf",
+        },
+      ]);
     } else if (route === "vision") {
       assert.match(result.aiResponse, /Unable to generate the image/);
     } else {

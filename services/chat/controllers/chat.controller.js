@@ -87,7 +87,7 @@ export const updateConversation = async (req, res) => {
 
 export const saveMessage = async (req, res) => {
   try {
-    const { conversationId, role, content, images,artifacts } = req.body || {};
+    const { conversationId, role, content, images,artifacts, files } = req.body || {};
     const conversation = await ownedConversation(req, res, conversationId);
     if (!conversation) return;
     if (
@@ -104,7 +104,8 @@ export const saveMessage = async (req, res) => {
       role,
       content,
       images,
-      artifacts
+      artifacts,
+      files
     });
     await Conversation.updateOne(
       { _id: conversationId },

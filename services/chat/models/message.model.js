@@ -16,6 +16,14 @@ const artifactsSchema= new mongoose.Schema({
   _id:false
 })
 
+const attachmentSchema = new mongoose.Schema({
+  name:String,
+  url:String,
+  type:String
+},{
+  _id:false
+})
+
 const messageSchema = new mongoose.Schema(
   {
     conversationId: {
@@ -35,7 +43,8 @@ const messageSchema = new mongoose.Schema(
     images:{
         type:[String],
     },
-    artifacts:[artifactsSchema]
+    artifacts:[artifactsSchema],
+    files:[attachmentSchema]
   },
   { timestamps: true },
 );

@@ -57,6 +57,7 @@ export const agent = async (req, res) => {
         role: "assistant",
         images: result?.images,
         artifacts: result?.artifacts,
+        files: result?.files,
       },
       options,
     );
@@ -65,6 +66,7 @@ export const agent = async (req, res) => {
       answer: response,
       images: Array.isArray(result.images) ? result.images : [],
       artifacts: result?.artifacts,
+      files: Array.isArray(result.files) ? result.files : [],
     });
   } catch (error) {
     console.error("Agent request failed:", error.message);

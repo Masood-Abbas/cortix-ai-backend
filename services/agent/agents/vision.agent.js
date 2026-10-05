@@ -39,7 +39,7 @@ export const visionAgent = async (state) => {
     const fileName = `image-${Date.now()}.webp`;
 
     await uploadTOS3(fileName, buffer, "image/webp");
-    const downloadUrl = await getFromS3(fileName, 24 * 60 * 60);
+    const downloadUrl = await getFromS3(fileName, 24 * 60 );
 
     return {
       ...state,
