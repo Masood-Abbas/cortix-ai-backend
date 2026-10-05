@@ -1,5 +1,5 @@
 import { getModel } from "../config/llmmodels.js";
-import { generatePdf } from "../utils/generatePdf.js";
+import { generatePdf } from "../utils/pdf/generatePdf.js";
 import { getFromS3 } from "../utils/getFromS3.js";
 import { uploadTOS3 } from "../utils/uplodeToS3.js";
 

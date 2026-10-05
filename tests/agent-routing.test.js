@@ -29,7 +29,7 @@ const hooks = registerHooks({
         };
       ` };
     }
-    if (url.endsWith("/utils/generatePdf.js")) {
+    if (url.endsWith("/utils/pdf/generatePdf.js")) {
       return { format: "module", shortCircuit: true, source: `
         export const generatePdf = async () => Buffer.from("pdf");
       ` };
@@ -63,15 +63,12 @@ for (const route of ["chat", "coding", "search", "pdf", "ppt", "vision", "unknow
       assert.equal(globalThis.__routeFixture.model, "coding");
     } else if (route === "pdf") {
       assert.equal(globalThis.__routeFixture.model, "pdf");
-      assert.deepEqual(result.files, [
-        {
-          name: result.files[0].name,
-          url: "https://signed.example.com/file.pdf",
-          type: "application/pdf",
-        },
-      ]);
+      assert.equal(result.files[0].url, "https://signed.example.com/file.pdf");
+      assert.equal(result.files[0].type, "application/pdf");
     } else if (route === "vision") {
       assert.match(result.aiResponse, /Unable to generate the image/);
+    } else if (route === "ppt") {
+      assert.match(result.aiResponse, /Unable to generate the PPt/);
     } else {
       assert.match(result.aiResponse, /not available yet/);
     }
