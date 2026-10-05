@@ -33,17 +33,12 @@ export const generatePdf = async (data) => {
         reject(error);
       });
 
-      // -----------------------------
-      // First page
-      // -----------------------------
 
       addHeader(doc, data);
 
       addContent(doc, data?.section || []);
 
-      // -----------------------------
-      // Finish PDF
-      // -----------------------------
+  
 
       doc.end();
     } catch (error) {
