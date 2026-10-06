@@ -40,6 +40,10 @@ app.use(
   "/api/agent",protect,
   proxyWithHeader(process.env.AGENT_SERVICE)
 );
+app.use(
+  "/api/billing",protect,
+  proxyWithHeader(process.env.BILLING_SERVICE)
+);
 
 app.use(morgan("dev"))
 

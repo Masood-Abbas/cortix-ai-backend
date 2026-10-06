@@ -72,3 +72,38 @@ export const logoutController= async(req,res)=>{
      return res.status(500).json({message:"Logout failed"})
   }
 } 
+
+export const updateUserPayment =async (req,res)=>{
+  try {
+    const {plan,credits,userId}=req.body
+    const user=await User.findById(userId)
+    if(!user){
+      return res.status(404).json({message:"user not found"})
+    }
+    user.plan=plan
+    user.credits+= credits
+    user.totalCredits+= credits
+    user.planExpireAt=new Date(Date.now() + 30*24*60*60*1000)
+    await user.save()
+
+    const sessionId = req.headers.cookie?.split(";").map((part) => part.trim()).find((part) => part.startsWith("session="))?.slice(8)
+    if (sessionId) await redis.set(`session-${sessionId}`,JSON.stringify({
+        userId: user._id,
+        name:user.name,
+        email:user.email,
+        avatar:user.avatar,
+        plan:user.plan,
+        credits:user.credits,
+        totalCredits:user.totalCredits,
+        planExpireAt:user.planExpireAt
+      }))
+      return res.status(200).json({
+        success:true
+      })
+
+  } catch (err) {
+    console.log(err)
+    return res.status(500).json({message:`update user payment error ${err}`})
+    
+  }
+}
