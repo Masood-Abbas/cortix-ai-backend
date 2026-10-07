@@ -6,6 +6,7 @@ import { getMemory, invalidateMemory } from "../utils/memory.js";
 export const agent = async (req, res) => {
   try {
     const { prompt, conversationId, agent } = req.body || {};
+    const file=req.file
     const userId = req.headers["x-user-id"];
     if (typeof userId !== "string" || !userId.trim()) {
       return res.status(401).json({ message: "Authentication required" });
@@ -43,6 +44,7 @@ export const agent = async (req, res) => {
       history,
       agent,
       userId,
+      file,
       cookie: req.headers.cookie,
     });
     const response = result.aiResponse;

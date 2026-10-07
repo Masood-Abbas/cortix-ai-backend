@@ -12,5 +12,6 @@ export const agentState = Annotation.Root({
   files:Annotation(),
   userId:Annotation(),
   user:Annotation(),
-  cookie:Annotation()
+  cookie:Annotation(),
+  file:Annotation()
 });

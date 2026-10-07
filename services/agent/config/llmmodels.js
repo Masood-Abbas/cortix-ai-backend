@@ -81,6 +81,8 @@ export const getModel = async (agent) => {
       return gemni;
     case "coding":
       return openrouter;
+    case "imageAnalyzer":
+      return gemni;
 
     default:
       return groq;
