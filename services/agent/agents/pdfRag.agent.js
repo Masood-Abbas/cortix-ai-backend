@@ -4,6 +4,7 @@ import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { vectorStore } from "../config/vectorDb.js";
 import { getModel } from "../config/llmmodels.js";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { deductCredit } from "../utils/deductCredit.js";
 
 
 export const pdfRag=async (state) => {
@@ -41,6 +42,7 @@ export const pdfRag=async (state) => {
                     `)
         ]
         const response =await llm.invoke(messages)
+        await deductCredit(state.userId,"pdf")
         return {
             ...state,
             aiResponse:response.content
