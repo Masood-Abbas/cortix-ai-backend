@@ -1,5 +1,6 @@
 import { getModel } from "../config/llmmodels.js";
 import { getUnsplashImages } from "../tools/unsplash.tool.js";
+import { deductCredit } from "../utils/deductCredit.js";
 
 const cleanJsonContent = (content) =>
   String(content || "")
@@ -158,11 +159,13 @@ export const codingAgent = async (state) => {
         `;
       const res = await llm.invoke(prompt);
       const data = extractJsonObject(res.content);
+      const creditResult = await deductCredit(state.userId,"coding",state.cookie)
       if (!data) {
         return {
           ...state,
           aiResponse: `# Generated Code\n\n${res.content}`,
           artifacts: [],
+          user: creditResult?.user || state.user,
         };
       }
       const files = normalizeFiles(data.files);
@@ -177,6 +180,7 @@ export const codingAgent = async (state) => {
             title:state.prompt
           },
         ],
+        user: creditResult?.user || state.user,
       };
     }
   
@@ -198,16 +202,18 @@ export const codingAgent = async (state) => {
       `);
   
     const data = res.content;
+     const creditResult = await deductCredit(state.userId,"coding",state.cookie)
     return {
       ...state,
       aiResponse: data,
       artifacts: [],
+      user: creditResult?.user || state.user,
     };
   } catch (error) {
     console.log(error)
     return {
       ...state,
-      aiResponse: error,
+      aiResponse: `Unable to generate code right now. ${error?.message || "Please try again."}`,
       artifacts: [],
     };
   }

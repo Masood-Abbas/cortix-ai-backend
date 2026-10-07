@@ -11,7 +11,10 @@ const PORT = process.env.PORT || 3000;
 
 
 // Middlewares
-app.use(express.json());
+app.use((req, res, next) => {
+  if (req.originalUrl === "/stripeWebhook") return next();
+  return express.json()(req, res, next);
+});
 
 // Routes
 app.use("/", router);

@@ -4,9 +4,11 @@ import {
   SystemMessage,
 } from "@langchain/core/messages";
 import { getModel } from "../config/llmmodels.js";
+import { deductCredit } from "../utils/deductCredit.js";
 
 export const chatAgent = async (state) => {
 try {
+  
     const chatllm = await getModel(state.agent === "coding" ? "coding" : "chat");
   
     const history = state.history || [];
@@ -50,10 +52,11 @@ try {
   
     messages.push(new HumanMessage(state.prompt));
     const res = await chatllm.invoke(messages);
-  
+  const creditResult = await deductCredit(state.userId,"chat",state.cookie)
     return {
       ...state,
       aiResponse: res.content,
+      user: creditResult?.user || state.user,
     };
 } catch (error) {
   return {

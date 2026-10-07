@@ -2,6 +2,7 @@ import { getModel } from "../config/llmmodels.js";
 import { generatePdf } from "../utils/pdf/generatePdf.js";
 import { getFromS3 } from "../utils/getFromS3.js";
 import { uploadTOS3 } from "../utils/uplodeToS3.js";
+import { deductCredit } from "../utils/deductCredit.js";
 
 
 export const pdfAgent = async (state) => {
@@ -38,7 +39,7 @@ export const pdfAgent = async (state) => {
     await uploadTOS3(fileName,pdfBuffer,"application/pdf")
 
     const downloadUrl=await getFromS3(fileName,24*60)
-
+ const creditResult = await deductCredit(state.userId,"pdf",state.cookie)
     return{
       ...state,
       aiResponse: "# PDF Generated Successfully\n\nThe PDF is ready. The download link expires in 1 day.",
@@ -49,6 +50,7 @@ export const pdfAgent = async (state) => {
           type: "application/pdf",
         },
       ],
+      user: creditResult?.user || state.user,
 
     }
 

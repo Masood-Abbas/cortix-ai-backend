@@ -42,6 +42,8 @@ export const agent = async (req, res) => {
       conversationId,
       history,
       agent,
+      userId,
+      cookie: req.headers.cookie,
     });
     const response = result.aiResponse;
     if (typeof response !== "string" || !response.trim()) {
@@ -67,6 +69,7 @@ export const agent = async (req, res) => {
       images: Array.isArray(result.images) ? result.images : [],
       artifacts: result?.artifacts,
       files: Array.isArray(result.files) ? result.files : [],
+      user: result?.user || null,
     });
   } catch (error) {
     console.error("Agent request failed:", error.message);

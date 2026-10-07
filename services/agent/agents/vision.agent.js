@@ -3,11 +3,13 @@ import { getModel } from "../config/llmmodels.js";
 import axios from "axios";
 import { uploadTOS3 } from "../utils/uplodeToS3.js";
 import { getFromS3 } from "../utils/getFromS3.js";
+import { deductCredit } from "../utils/deductCredit.js";
 
 
 
 export const visionAgent = async (state) => {
   try {
+   
     const llm = await getModel("vision");
     const res = await llm.invoke(
       `You are an elite AI image Prompt engineer.
@@ -34,6 +36,7 @@ export const visionAgent = async (state) => {
 
     const prompt = res.content.trim();
     const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
+     const creditResult = await deductCredit(state.userId,"vision",state.cookie)
     const imageRes = await axios.get(imageUrl, { responseType: "arraybuffer" });
     const buffer = Buffer.from(imageRes.data);
     const fileName = `image-${Date.now()}.webp`;
@@ -45,6 +48,7 @@ export const visionAgent = async (state) => {
       ...state,
       aiResponse: "# Image Generated Successfully\n\nThe image is ready. The download link expires in 1 day.",
       images: [downloadUrl],
+      user: creditResult?.user || state.user,
     };
   } catch (error) {
     console.error("Vision agent error:", error.message);
@@ -55,4 +59,3 @@ export const visionAgent = async (state) => {
     };
   }
 };
-
