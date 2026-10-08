@@ -19,13 +19,22 @@ export const pdfRag=async (state) => {
             data:buffer
         })
         const result=await pdf.getText()
-        const text= result.text
+        const text= String(result.text || "").trim()
+        if (!text) {
+            return {
+                ...state,
+                aiResponse:"I could not extract readable text from this PDF."
+            }
+        }
         const splitter = new RecursiveCharacterTextSplitter({ chunkSize: 1000, chunkOverlap: 500 })
         const docs =await splitter.createDocuments([text])
         const collectonName=`pdf-${Date.now()}`
 
         const { vectorStore } = await import("../config/vectorDb.js");
         const store=await vectorStore(docs,collectonName)
+        if (!store?.similaritySearch) {
+            throw new Error("Vector store was not initialized")
+        }
 
         const relevantDocs= await store.similaritySearch(state.prompt,5)
 
@@ -60,7 +69,7 @@ export const pdfRag=async (state) => {
         console.log(error)
         return {
             ...state,
-            aiResponse:"Failed to Aanalze pdf"
+            aiResponse:`Failed to analyze PDF. ${error?.message || "Please try again."}`
         }
     }finally{
         if (state.file?.path && fs.existsSync(state.file.path)) {

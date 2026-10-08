@@ -25,6 +25,7 @@ const PORT = process.env.PORT || 8000;
 app.use(cookieParser());
 app.use((req, res, next) => {
   if (req.originalUrl === "/api/billing/stripeWebhook") return next();
+  if (req.originalUrl.startsWith("/api/agent")) return next();
   return express.json()(req, res, next);
 });
 
@@ -40,7 +41,7 @@ app.use(
 );
 app.use(
   "/api/agent",protect,
-  proxyWithHeader(process.env.AGENT_SERVICE)
+  proxyWithHeader(process.env.AGENT_SERVICE, undefined, { parseReqBody: false })
 );
 app.use(
   "/api/billing/stripeWebhook",

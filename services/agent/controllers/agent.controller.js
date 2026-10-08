@@ -2,23 +2,39 @@ import axios from "axios";
 import mongoose from "mongoose";
 import { graph } from "../graph/graph.js";
 import { getMemory, invalidateMemory } from "../utils/memory.js";
+import fs from "fs";
+import { uploadTOS3 } from "../utils/uplodeToS3.js";
+import { getFromS3 } from "../utils/getFromS3.js";
 
 export const agent = async (req, res) => {
   try {
     const { prompt, conversationId, agent } = req.body || {};
     const file=req.file
+    const promptText = typeof prompt === "string" ? prompt.trim() : "";
     const userId = req.headers["x-user-id"];
     if (typeof userId !== "string" || !userId.trim()) {
       return res.status(401).json({ message: "Authentication required" });
     }
     if (
       !mongoose.isObjectIdOrHexString(conversationId) ||
-      typeof prompt !== "string" ||
-      !prompt.trim()
+      (!promptText && !file)
     ) {
       return res.status(400).json({
-        message: "A conversation ID and nonempty prompt are required",
+        message: "A conversation ID and a prompt or file are required",
       });
+    }
+    const messageContent = promptText || `Uploaded file: ${file.originalname}`;
+    let userFiles = [];
+    if (file?.path) {
+      const fileName = `uploads/${Date.now()}-${file.originalname}`;
+      await uploadTOS3(fileName, fs.readFileSync(file.path), file.mimetype);
+      userFiles = [
+        {
+          name: file.originalname,
+          url: await getFromS3(fileName, 24 * 60 * 60),
+          type: file.mimetype,
+        },
+      ];
     }
     const options = { headers: { "x-user-id": userId }, timeout: 15000 };
     // Check ownership even on a cache hit, before invoking a paid model.
@@ -32,14 +48,15 @@ export const agent = async (req, res) => {
       `${process.env.CHAT_SERVICE}/save-messge`,
       {
         conversationId,
-        content: prompt.trim(),
+        content: messageContent,
         role: "user",
+        files: userFiles,
       },
       options,
     );
     await invalidateMemory(conversationId, userId);
     const result = await graph.invoke({
-      prompt: prompt.trim(),
+      prompt: messageContent,
       conversationId,
       history,
       agent,
