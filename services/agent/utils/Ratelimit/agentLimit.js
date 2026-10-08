@@ -1,7 +1,7 @@
 import redis from "../../../../shared/redis/redis.js";
 
 const Limits = {
-    chat: 1,
+    chat: 20,
     coding: 5,
     pdf: 5,
     pdfRag: 5,
