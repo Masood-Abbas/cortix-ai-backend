@@ -18,7 +18,7 @@ const storage=multer.diskStorage({
 })
 
 const fileFilter=(req,file,cb)=>{
-    if(file.mimetype == "application/pdf" || file.mimetype.startWith("image/")){
+    if(file.mimetype == "application/pdf" || file.mimetype.startsWith("image/")){
         cb(null,true)
     }else{
         cb(new Error("only pdf and images are allowed"))
@@ -26,6 +26,6 @@ const fileFilter=(req,file,cb)=>{
 
 }
 
-export default multer({storage,fileFilter,limit:{
+export default multer({storage,fileFilter,limits:{
     fileSize:20*1024*1024
 }})

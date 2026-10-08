@@ -1,9 +1,15 @@
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { getModel } from "../config/llmmodels.js";
-import fs from "fs";
+import fs from "fs/promises";
 import { deductCredit } from "../utils/deductCredit.js";
 export const imageAnalyzer = async (state) => {
   try {
+    if (!state.file?.path || !state.file?.mimetype?.startsWith("image/")) {
+      return {
+        ...state,
+        aiResponse: "Please upload an image file first.",
+      };
+    }
     const llm = await getModel("imageAnalyzer");
     const imageBuffer = await fs.readFile(state.file.path);
     const base64image = imageBuffer.toString("base64");
@@ -36,18 +42,21 @@ export const imageAnalyzer = async (state) => {
       }),
     ];
     const response=await llm.invoke(message)
-    await deductCredit(state.userId,"vision")
+    const creditResult = await deductCredit(state.userId,"vision",state.cookie)
     return {
         ...state,
-        apiResponse:response.content
+        aiResponse:response.content,
+        user: creditResult?.user || state.user,
     }
   } catch (error) {
     console.log(error);
     return {
         ...state,
-        apiResponse:`failed to analyics the file`
+        aiResponse:`failed to analyze the file`
     }
   } finally{
-    fs.unlink(state.file.path)
+    if (state.file?.path) {
+      await fs.unlink(state.file.path).catch(() => {});
+    }
   }
 };

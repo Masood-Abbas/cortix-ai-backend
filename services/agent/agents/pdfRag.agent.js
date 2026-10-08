@@ -1,7 +1,6 @@
 import fs from "fs"
 import { PDFParse } from "pdf-parse"
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
-import { vectorStore } from "../config/vectorDb.js";
 import { getModel } from "../config/llmmodels.js";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { deductCredit } from "../utils/deductCredit.js";
@@ -9,6 +8,12 @@ import { deductCredit } from "../utils/deductCredit.js";
 
 export const pdfRag=async (state) => {
     try {
+        if (!state.file?.path) {
+            return {
+                ...state,
+                aiResponse:"Please upload a PDF file first."
+            }
+        }
         const buffer = fs.readFileSync(state.file.path)
         const pdf= new PDFParse({
             data:buffer
@@ -19,6 +24,7 @@ export const pdfRag=async (state) => {
         const docs =await splitter.createDocuments([text])
         const collectonName=`pdf-${Date.now()}`
 
+        const { vectorStore } = await import("../config/vectorDb.js");
         const store=await vectorStore(docs,collectonName)
 
         const relevantDocs= await store.similaritySearch(state.prompt,5)
@@ -42,10 +48,11 @@ export const pdfRag=async (state) => {
                     `)
         ]
         const response =await llm.invoke(messages)
-        await deductCredit(state.userId,"pdf")
+        const creditResult = await deductCredit(state.userId,"pdf",state.cookie)
         return {
             ...state,
-            aiResponse:response.content
+            aiResponse:response.content,
+            user: creditResult?.user || state.user,
         }
 
 
@@ -56,6 +63,8 @@ export const pdfRag=async (state) => {
             aiResponse:"Failed to Aanalze pdf"
         }
     }finally{
-        fs.unlinkSync(state.file.path)
+        if (state.file?.path && fs.existsSync(state.file.path)) {
+            fs.unlinkSync(state.file.path)
+        }
     }
 }
