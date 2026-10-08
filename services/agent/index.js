@@ -16,6 +16,13 @@ app.use(express.json());
 
 // Routes
 app.use("/", router);
+app.use((err,req,res,next)=>{
+  console.log(err)
+  if(err.status){
+    return res.status(err.status).json(err.data || { message: err.message })
+  }
+  return res.status(500).json({message:`agent error ${err}`})
+})
 
 // Start server
 app.listen(PORT, async () => {

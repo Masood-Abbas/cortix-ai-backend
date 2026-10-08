@@ -124,15 +124,22 @@ export const getCurrentUser = async (req, res) => {
 export const deductCredits=async(req,res)=>{
 try {
   const {userId,agent}=req.body
-  const user=await User.findById(userId)
-   if (!user) return res.status(404).json({ message: "user not found" });
-   const requiredCredits=Cost[agent] || 1 
-    if(user.credits<requiredCredits){
-      return res.status(400).json({message:"Insufficient credits"})
-    }
-
-    user.credits-=requiredCredits
-    await user.save()
+  const requiredCredits=Cost[agent] || 1
+  const user=await User.findOneAndUpdate(
+    { _id: userId, credits: { $gte: requiredCredits } },
+    { $inc: { credits: -requiredCredits } },
+    { new: true },
+  )
+  if (!user) {
+    const existingUser = await User.findById(userId);
+    if (!existingUser) return res.status(404).json({ message: "user not found" });
+    return res.status(402).json({
+      message:"Insufficient credits",
+      requiredCredits,
+      credits: existingUser.credits,
+      user: sessionPayload(existingUser),
+    })
+  }
     const updatedUser = sessionPayload(user)
 
       // Get current session
@@ -155,6 +162,7 @@ try {
     return res.status(200).json({
       success: true,
       credits: user.credits,
+      requiredCredits,
       user: updatedUser,
     });
 

@@ -2,8 +2,11 @@ import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { getModel } from "../config/llmmodels.js";
 import fs from "fs/promises";
 import { deductCredit } from "../utils/deductCredit.js";
+import { checkAgentLimit } from "../utils/Ratelimit/agentLimit.js";
 export const imageAnalyzer = async (state) => {
   try {
+    await checkAgentLimit(state.userId,"imageAnalyzer")
+    const creditResult = await deductCredit(state.userId,"vision",state.cookie)
     if (!state.file?.path || !state.file?.mimetype?.startsWith("image/")) {
       return {
         ...state,
@@ -42,7 +45,6 @@ export const imageAnalyzer = async (state) => {
       }),
     ];
     const response=await llm.invoke(message)
-    const creditResult = await deductCredit(state.userId,"vision",state.cookie)
     return {
         ...state,
         aiResponse:response.content,
@@ -50,9 +52,13 @@ export const imageAnalyzer = async (state) => {
     }
   } catch (error) {
     console.log(error);
+    const message = [402, 429].includes(error?.status)
+      ? error.message
+      : "failed to analyze the file";
     return {
         ...state,
-        aiResponse:`failed to analyze the file`
+        aiResponse:message,
+        user: error?.user || state.user,
     }
   } finally{
     if (state.file?.path) {

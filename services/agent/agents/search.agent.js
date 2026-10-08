@@ -1,8 +1,11 @@
 import { searchTool } from "../config/tavily.js";
 import { deductCredit } from "../utils/deductCredit.js";
+import { checkAgentLimit } from "../utils/Ratelimit/agentLimit.js";
 
 export const searchAgent = async (state) => {
   try {
+    await checkAgentLimit(state.userId,"search")
+    const creditResult = await deductCredit(state.userId,"search",state.cookie)
     
     const results = await searchTool.invoke({
       query: state.prompt,
@@ -13,7 +16,6 @@ export const searchAgent = async (state) => {
       : Array.isArray(results?.results)
         ? results.results
         : [];
-        const creditResult = await deductCredit(state.userId,"search",state.cookie)
     return {
       ...state,
       searchResults,
@@ -26,6 +28,8 @@ export const searchAgent = async (state) => {
       ...state,
       searchResults: [],
       images: [],
+      aiResponse: error?.message || "Unable to complete search request.",
+      user: error?.user || state.user,
     };
   }
 };

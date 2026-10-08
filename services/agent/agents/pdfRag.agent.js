@@ -4,10 +4,13 @@ import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { getModel } from "../config/llmmodels.js";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { deductCredit } from "../utils/deductCredit.js";
+import { checkAgentLimit } from "../utils/Ratelimit/agentLimit.js";
 
 
 export const pdfRag=async (state) => {
     try {
+        await checkAgentLimit(state.userId,"pdfRag")
+        const creditResult = await deductCredit(state.userId,"pdf",state.cookie)
         if (!state.file?.path) {
             return {
                 ...state,
@@ -57,7 +60,6 @@ export const pdfRag=async (state) => {
                     `)
         ]
         const response =await llm.invoke(messages)
-        const creditResult = await deductCredit(state.userId,"pdf",state.cookie)
         return {
             ...state,
             aiResponse:response.content,
@@ -67,9 +69,13 @@ export const pdfRag=async (state) => {
 
     } catch (error) {
         console.log(error)
+        const message = [402, 429].includes(error?.status)
+            ? error.message
+            : `Failed to analyze PDF. ${error?.message || "Please try again."}`
         return {
             ...state,
-            aiResponse:`Failed to analyze PDF. ${error?.message || "Please try again."}`
+            aiResponse:message,
+            user: error?.user || state.user,
         }
     }finally{
         if (state.file?.path && fs.existsSync(state.file.path)) {

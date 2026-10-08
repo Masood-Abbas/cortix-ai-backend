@@ -44,6 +44,16 @@ const hooks = registerHooks({
         export const getFromS3 = async () => "https://signed.example.com/file.pdf";
       ` };
     }
+    if (url.endsWith("/utils/deductCredit.js")) {
+      return { format: "module", shortCircuit: true, source: `
+        export const deductCredit = async () => ({ user: { userId: "owner", credits: 99 } });
+      ` };
+    }
+    if (url.endsWith("/utils/Ratelimit/agentLimit.js")) {
+      return { format: "module", shortCircuit: true, source: `
+        export const checkAgentLimit = async () => ({ success: true });
+      ` };
+    }
     return nextLoad(url, context);
   },
 });

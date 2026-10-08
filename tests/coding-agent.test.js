@@ -36,6 +36,20 @@ const hooks = registerHooks({
         `,
       };
     }
+    if (url.endsWith("/utils/deductCredit.js")) {
+      return {
+        format: "module",
+        shortCircuit: true,
+        source: `export const deductCredit = async () => ({ user: { userId: "owner", credits: 90 } });`,
+      };
+    }
+    if (url.endsWith("/utils/Ratelimit/agentLimit.js")) {
+      return {
+        format: "module",
+        shortCircuit: true,
+        source: `export const checkAgentLimit = async () => ({ success: true });`,
+      };
+    }
     return nextLoad(url, context);
   },
 });

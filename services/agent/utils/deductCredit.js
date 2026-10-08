@@ -18,8 +18,14 @@ try {
     )
     return data
 } catch (error) {
-    console.log(error?.response?.data || error.message || error)
-    return null
+    const payload = error?.response?.data;
+    const message = payload?.message || error.message || "Credit deduction failed";
+    const creditError = new Error(message);
+    creditError.status = error?.response?.status || 500;
+    creditError.user = payload?.user || null;
+    creditError.requiredCredits = payload?.requiredCredits;
+    creditError.credits = payload?.credits;
+    throw creditError;
     
 }
 }

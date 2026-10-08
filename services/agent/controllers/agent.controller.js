@@ -6,10 +6,10 @@ import fs from "fs";
 import { uploadTOS3 } from "../utils/uplodeToS3.js";
 import { getFromS3 } from "../utils/getFromS3.js";
 
-export const agent = async (req, res) => {
+export const agent = async (req, res, next) => {
   try {
     const { prompt, conversationId, agent } = req.body || {};
-    const file=req.file
+    const file = req.file;
     const promptText = typeof prompt === "string" ? prompt.trim() : "";
     const userId = req.headers["x-user-id"];
     if (typeof userId !== "string" || !userId.trim()) {
@@ -92,15 +92,18 @@ export const agent = async (req, res) => {
     });
   } catch (error) {
     console.error("Agent request failed:", error.message);
+    if (next) return next(error);
     const upstreamStatus = error.response?.status;
-    const status = [400, 401, 403, 404].includes(upstreamStatus)
+    const status = [400, 401, 402, 403, 404, 429].includes(upstreamStatus)
       ? upstreamStatus
-      : 500;
+      : [400, 401, 402, 403, 404, 429].includes(error.status)
+        ? error.status
+        : 500;
     return res.status(status).json({
       message:
         status === 404
           ? "Conversation not found"
-          : error,
+          : error.message || "Agent request failed",
     });
   }
 };

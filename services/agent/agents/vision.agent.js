@@ -4,12 +4,14 @@ import axios from "axios";
 import { uploadTOS3 } from "../utils/uplodeToS3.js";
 import { getFromS3 } from "../utils/getFromS3.js";
 import { deductCredit } from "../utils/deductCredit.js";
+import { checkAgentLimit } from "../utils/Ratelimit/agentLimit.js";
 
 
 
 export const visionAgent = async (state) => {
   try {
-   
+   await checkAgentLimit(state.userId,"vision")
+    const creditResult = await deductCredit(state.userId,"vision",state.cookie)
     const llm = await getModel("vision");
     const res = await llm.invoke(
       `You are an elite AI image Prompt engineer.
@@ -36,7 +38,6 @@ export const visionAgent = async (state) => {
 
     const prompt = res.content.trim();
     const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
-     const creditResult = await deductCredit(state.userId,"vision",state.cookie)
     const imageRes = await axios.get(imageUrl, { responseType: "arraybuffer" });
     const buffer = Buffer.from(imageRes.data);
     const fileName = `image-${Date.now()}.webp`;
@@ -52,10 +53,14 @@ export const visionAgent = async (state) => {
     };
   } catch (error) {
     console.error("Vision agent error:", error.message);
+    const message = [402, 429].includes(error?.status)
+      ? error.message
+      : "Unable to generate the image right now. Please try again.";
     return {
       ...state,
-      aiResponse: "Unable to generate the image right now. Please try again.",
+      aiResponse: message,
       images: [],
+      user: error?.user || state.user,
     };
   }
 };

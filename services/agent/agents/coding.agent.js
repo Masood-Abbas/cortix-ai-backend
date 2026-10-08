@@ -1,6 +1,7 @@
 import { getModel } from "../config/llmmodels.js";
 import { getUnsplashImages } from "../tools/unsplash.tool.js";
 import { deductCredit } from "../utils/deductCredit.js";
+import { checkAgentLimit } from "../utils/Ratelimit/agentLimit.js";
 
 const cleanJsonContent = (content) =>
   String(content || "")
@@ -62,6 +63,8 @@ const latestProjectArtifact = (history = []) => {
 
 export const codingAgent = async (state) => {
   try {
+    await checkAgentLimit(state.userId,"coding")
+    const creditResult = await deductCredit(state.userId,"coding",state.cookie)
     const intentLlm = await getModel("intent");
     const llm = await getModel("coding");
     const existingArtifact = latestProjectArtifact(state.history);
@@ -159,7 +162,6 @@ export const codingAgent = async (state) => {
         `;
       const res = await llm.invoke(prompt);
       const data = extractJsonObject(res.content);
-      const creditResult = await deductCredit(state.userId,"coding",state.cookie)
       if (!data) {
         return {
           ...state,
@@ -202,7 +204,6 @@ export const codingAgent = async (state) => {
       `);
   
     const data = res.content;
-     const creditResult = await deductCredit(state.userId,"coding",state.cookie)
     return {
       ...state,
       aiResponse: data,
@@ -215,6 +216,7 @@ export const codingAgent = async (state) => {
       ...state,
       aiResponse: `Unable to generate code right now. ${error?.message || "Please try again."}`,
       artifacts: [],
+      user: error?.user || state.user,
     };
   }
 };

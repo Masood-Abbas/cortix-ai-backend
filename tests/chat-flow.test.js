@@ -13,6 +13,8 @@ const hooks = registerHooks({
       ["/shared/redis/redis.js", "export default globalThis.__chatFlowFixture.redis;"],
       ["/graph/graph.js", "export const graph = globalThis.__chatFlowFixture.graph;"],
       ["/config/llmmodels.js", "export const getModel = async () => globalThis.__chatFlowFixture.model;"],
+      ["/utils/deductCredit.js", "export const deductCredit = async () => ({ user: { userId: 'owner', credits: 99 } });"],
+      ["/utils/Ratelimit/agentLimit.js", "export const checkAgentLimit = async () => ({ success: true });"],
     ];
     const match = exports.find(([suffix]) => url.endsWith(suffix));
     return match ? { format: "module", shortCircuit: true, source: match[1] } : nextLoad(url, context);

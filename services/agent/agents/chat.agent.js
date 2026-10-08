@@ -5,10 +5,17 @@ import {
 } from "@langchain/core/messages";
 import { getModel } from "../config/llmmodels.js";
 import { deductCredit } from "../utils/deductCredit.js";
+import { checkAgentLimit } from "../utils/Ratelimit/agentLimit.js";
 
 export const chatAgent = async (state) => {
 try {
-  
+  if (state.aiResponse) return state;
+  const hasSearchContext = Array.isArray(state.searchResults) && state.searchResults.length > 0;
+  let creditResult = null;
+  if (!hasSearchContext) {
+    await checkAgentLimit(state.userId,"chat")
+    creditResult = await deductCredit(state.userId,"chat",state.cookie)
+  }
     const chatllm = await getModel(state.agent === "coding" ? "coding" : "chat");
   
     const history = state.history || [];
@@ -52,7 +59,6 @@ try {
   
     messages.push(new HumanMessage(state.prompt));
     const res = await chatllm.invoke(messages);
-  const creditResult = await deductCredit(state.userId,"chat",state.cookie)
     return {
       ...state,
       aiResponse: res.content,
@@ -61,7 +67,8 @@ try {
 } catch (error) {
   return {
       ...state,
-      aiResponse: error,
+      aiResponse: error?.message || "Unable to complete chat request.",
+      user: error?.user || state.user,
     };
 }
 };

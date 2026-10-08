@@ -3,9 +3,12 @@ import { generatePpt } from "../utils/ppt/generatePpt.js";
 import { getFromS3 } from "../utils/getFromS3.js";
 import { uploadTOS3 } from "../utils/uplodeToS3.js";
 import { deductCredit } from "../utils/deductCredit.js";
+import { checkAgentLimit } from "../utils/Ratelimit/agentLimit.js";
 
 export const pptAgent = async (state) => {
   try {
+    await checkAgentLimit(state.userId,"ppt")
+    const creditResult = await deductCredit(state.userId, "ppt", state.cookie);
     const llm = await getModel("ppt");
     const prompt = `
     You are a professional presentation designer.
@@ -52,7 +55,6 @@ export const pptAgent = async (state) => {
     );
 
     const downloadUrl = await getFromS3(fileName, 24 * 60 * 60);
-    const creditResult = await deductCredit(state.userId, "ppt", state.cookie);
 
     return {
       ...state,
@@ -69,10 +71,14 @@ export const pptAgent = async (state) => {
     };
   } catch (error) {
     console.log(error);
+    const message = [402, 429].includes(error?.status)
+      ? error.message
+      : "Unable to generate the PPt right now. Please try again.";
     return {
       ...state,
-      aiResponse: "Unable to generate the PPt right now. Please try again.",
+      aiResponse: message,
       files: [],
+      user: error?.user || state.user,
     };
   }
 };
