@@ -38,7 +38,7 @@ export const pdfRag=async (state) => {
 
         const relevantDocs= await store.similaritySearch(state.prompt,5)
 
-        const context = relevantDocs.map(d=>d.pageContent).join("/n/n")
+        const context = relevantDocs.map(d=>d.pageContent).join("\n\n")
 
         const llm=await getModel("pdfRag")
         const messages=[
