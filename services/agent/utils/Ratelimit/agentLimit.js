@@ -6,7 +6,7 @@ const Limits = {
     pdf: 5,
     pdfRag: 5,
     ppt: 5,
-    vision: 5,
+    vision: 15,
     imageAnalyzer: 5,
     search: 5,
 };

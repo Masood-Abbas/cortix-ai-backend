@@ -23,6 +23,8 @@ app.use(
 
 const PORT = process.env.PORT || 8000;
 app.use(cookieParser());
+// Register request logging before proxy routes so every request is logged.
+app.use(morgan("dev"));
 app.use((req, res, next) => {
   if (req.originalUrl === "/api/billing/stripeWebhook") return next();
   if (req.originalUrl.startsWith("/api/agent")) return next();
@@ -39,6 +41,7 @@ app.use(
   "/api/chat",protect,
   proxyWithHeader(process.env.CHAT_SERVICE)
 );
+console.log(process.env.AGENT_SERVICE)
 app.use(
   "/api/agent",protect,
   proxyWithHeader(process.env.AGENT_SERVICE, undefined, { parseReqBody: false })
@@ -55,12 +58,13 @@ app.use(
   proxyWithHeader(process.env.BILLING_SERVICE)
 );
 
-app.use(morgan("dev"))
-
 app.get(
   "/api/me",protect,
   proxyWithHeader(process.env.AUTH_SERVICE, "/me")
 )
+app.get("/api/data", (req, res) => {
+  res.json({message:"API is working"});
+});
 
 app.listen(PORT, () => {
   console.log(`Gateway Server running on http://localhost:${PORT}`);

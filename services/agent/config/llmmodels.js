@@ -7,7 +7,7 @@ const groq = new ChatGroq({
 });
 
 const gemni = new ChatGoogleGenerativeAI({
-  model: "gemini-3.5-flash",
+  model: "gemini-3.5-flash-lite",
 });
 
 const readOpenRouterContent = (content) => {

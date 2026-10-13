@@ -6,7 +6,7 @@ import router from "./routes/auth.route.js";
 
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8006;
 
 
 

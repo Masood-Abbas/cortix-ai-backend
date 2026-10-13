@@ -15,6 +15,9 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 
 // Routes
+app.get("/data",(req,res)=>{
+  return res.json({message:"agent data"})
+})
 app.use("/", router);
 app.use((err,req,res,next)=>{
   console.log(err)
@@ -23,6 +26,8 @@ app.use((err,req,res,next)=>{
   }
   return res.status(500).json({message:`agent error ${err}`})
 })
+
+
 
 // Start server
 app.listen(PORT, async () => {
