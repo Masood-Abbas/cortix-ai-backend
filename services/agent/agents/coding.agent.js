@@ -63,12 +63,16 @@ const latestProjectArtifact = (history = []) => {
 
 export const codingAgent = async (state) => {
   try {
-    await checkAgentLimit(state.userId,"coding")
-    const creditResult = await deductCredit(state.userId,"coding",state.cookie)
+    await checkAgentLimit(state.userId, "coding");
+    const creditResult = await deductCredit(
+      state.userId,
+      "coding",
+      state.cookie,
+    );
     const intentLlm = await getModel("intent");
     const llm = await getModel("coding");
     const existingArtifact = latestProjectArtifact(state.history);
-  
+
     const intentRes = await intentLlm.invoke(`
       You are an intent classifier .
       Return ONLY one of these values.
@@ -83,12 +87,14 @@ export const codingAgent = async (state) => {
       USER REQUEST:
       ${state.prompt}
       `);
-    const intent = String(intentRes.content || "").trim().toUpperCase();
+    const intent = String(intentRes.content || "")
+      .trim()
+      .toUpperCase();
     const shouldReturnProject =
       intent === "CODE_GENERATION" ||
       (existingArtifact &&
         ["DEBUGGING", "OPTIMIZATION", "CONVERSION"].includes(intent));
-  
+
     if (shouldReturnProject) {
       const unsplashImages = await getUnsplashImages(state.prompt, 6);
       const prompt = `
@@ -179,13 +185,13 @@ export const codingAgent = async (state) => {
             id: Date.now(),
             type: "Project",
             files,
-            title:state.prompt
+            title: state.prompt,
           },
         ],
         user: creditResult?.user || state.user,
       };
     }
-  
+
     const res = await llm.invoke(`
       The user's request is:
       ${intent}
@@ -202,7 +208,7 @@ export const codingAgent = async (state) => {
       User Request:
       ${state.prompt}
       `);
-  
+
     const data = res.content;
     return {
       ...state,
@@ -211,7 +217,7 @@ export const codingAgent = async (state) => {
       user: creditResult?.user || state.user,
     };
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return {
       ...state,
       aiResponse: `Unable to generate code right now. ${error?.message || "Please try again."}`,
